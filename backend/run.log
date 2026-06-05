@@ -1,0 +1,69 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------< com.smartspend:smartspend-backend >------------------
+[INFO] Building SmartSpend Backend 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.2.0:run (default-cli) > test-compile @ smartspend-backend >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ smartspend-backend ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ smartspend-backend ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ smartspend-backend ---
+[INFO] skip non existing resourceDirectory C:\Users\Admin\Desktop\DACN\backend\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ smartspend-backend ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] <<< spring-boot:3.2.0:run (default-cli) < test-compile @ smartspend-backend <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.2.0:run (default-cli) @ smartspend-backend ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.0)
+
+2026-06-06T01:26:23.304+07:00  INFO 17688 --- [           main] com.smartspend.SmartSpendApplication     : Starting SmartSpendApplication using Java 17.0.12 with PID 17688 (C:\Users\Admin\Desktop\DACN\backend\target\classes started by Admin in C:\Users\Admin\Desktop\DACN\backend)
+2026-06-06T01:26:23.305+07:00 DEBUG 17688 --- [           main] com.smartspend.SmartSpendApplication     : Running with Spring Boot v3.2.0, Spring v6.1.1
+2026-06-06T01:26:23.306+07:00  INFO 17688 --- [           main] com.smartspend.SmartSpendApplication     : No active profile set, falling back to 1 default profile: "default"
+2026-06-06T01:26:23.791+07:00  INFO 17688 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-06-06T01:26:23.847+07:00  INFO 17688 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 50 ms. Found 4 JPA repository interfaces.
+2026-06-06T01:26:24.262+07:00  INFO 17688 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-06-06T01:26:24.269+07:00  INFO 17688 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-06-06T01:26:24.269+07:00  INFO 17688 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
+2026-06-06T01:26:24.312+07:00  INFO 17688 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-06-06T01:26:24.312+07:00  INFO 17688 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 978 ms
+2026-06-06T01:26:24.407+07:00  INFO 17688 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-06-06T01:26:24.449+07:00  INFO 17688 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.3.1.Final
+2026-06-06T01:26:24.480+07:00  INFO 17688 --- [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-06-06T01:26:24.631+07:00  INFO 17688 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-06-06T01:26:24.649+07:00  INFO 17688 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-06-06T01:26:24.761+07:00  INFO 17688 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@98637a2
+2026-06-06T01:26:24.763+07:00  INFO 17688 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-06-06T01:26:24.790+07:00  WARN 17688 --- [           main] org.hibernate.dialect.Dialect            : HHH000511: The 5.5.0 version for [org.hibernate.dialect.MySQLDialect] is no longer supported, hence certain features may not work properly. The minimum supported version is 5.7.0. Check the community dialects project for available legacy versions.
+2026-06-06T01:26:24.793+07:00  WARN 17688 --- [           main] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-06-06T01:26:25.429+07:00  INFO 17688 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-06-06T01:26:25.486+07:00  INFO 17688 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-06-06T01:26:25.747+07:00 DEBUG 17688 --- [           main] com.smartspend.security.JwtAuthFilter    : Filter 'jwtAuthFilter' configured for use
+2026-06-06T01:26:25.799+07:00  INFO 17688 --- [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-06-06T01:26:26.315+07:00  WARN 17688 --- [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-06-06T01:26:26.538+07:00  INFO 17688 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@4a17c516, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@31854086, org.springframework.security.web.context.SecurityContextHolderFilter@541b89ec, org.springframework.security.web.header.HeaderWriterFilter@31f151ff, org.springframework.web.filter.CorsFilter@7b7bfa82, org.springframework.security.web.authentication.logout.LogoutFilter@6631e6af, com.smartspend.security.JwtAuthFilter@6018d82c, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@32317a37, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@1727d525, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@39081953, org.springframework.security.web.session.SessionManagementFilter@31419d4a, org.springframework.security.web.access.ExceptionTranslationFilter@5837b801, org.springframework.security.web.access.intercept.AuthorizationFilter@79805d37]
+2026-06-06T01:26:26.727+07:00  INFO 17688 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path ''
+2026-06-06T01:26:26.733+07:00  INFO 17688 --- [           main] com.smartspend.SmartSpendApplication     : Started SmartSpendApplication in 3.746 seconds (process running for 4.016)
+2026-06-06T01:26:51.108+07:00  INFO 17688 --- [nio-8080-exec-1] o.apache.tomcat.util.http.parser.Cookie  : A cookie header was received [g_state={"i_l":0,"i_ll":1780464840480,"i_e":{"enable_itp_optimization":0},"i_et":1777193512714,"i_b":"pVwpUsQGjyZ4T/VMxo4j7aV2bAqOTvRDTL37HXZRWbk"}] that contained an invalid cookie. That cookie will be ignored.
+ Note: further occurrences of this error will be logged at DEBUG level.
+2026-06-06T01:26:51.113+07:00  INFO 17688 --- [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-06-06T01:26:51.113+07:00  INFO 17688 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-06-06T01:26:51.114+07:00  INFO 17688 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-06-06T01:26:51.304+07:00  WARN 17688 --- [nio-8080-exec-1] o.s.w.s.h.HandlerMappingIntrospector     : Cache miss for REQUEST dispatch to '/api/wallets' (previous null). Performing MatchableHandlerMapping lookup. This is logged once only at WARN level, and every time at TRACE.
