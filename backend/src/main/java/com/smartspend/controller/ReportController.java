@@ -37,4 +37,10 @@ public class ReportController {
             @RequestParam(defaultValue = "month") String period) {
         return ResponseEntity.ok(reportService.getTimeline(user, period));
     }
+
+    @GetMapping("/monthly-trend")
+    public ResponseEntity<List<Map<String, Object>>> getMonthlyTrend(
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(reportService.getMonthlyTrend(user));
+    }
 }

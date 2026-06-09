@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, ArrowLeftRight, Wallet, BarChart3,
-  Bot, LogOut, ShieldCheck, UserCircle, Tag,
+  Bot, LogOut, ShieldCheck, UserCircle, Tag, PiggyBank, TrendingUp,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import NotificationBell from '../common/NotificationBell'
@@ -13,6 +13,8 @@ const navItems = [
   { to: '/wallets',      icon: Wallet,          label: 'Ví tiền'    },
   { to: '/reports',      icon: BarChart3,       label: 'Báo cáo'    },
   { to: '/ai',           icon: Bot,             label: 'Trợ lý AI'  },
+  { to: '/budget',      icon: PiggyBank,       label: 'Ngân sách'  },
+  { to: '/forecast',    icon: TrendingUp,      label: 'Dự báo'     },
   { to: '/categories',  icon: Tag,             label: 'Danh mục'   },
 ]
 

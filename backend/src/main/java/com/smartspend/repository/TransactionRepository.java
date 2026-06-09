@@ -32,6 +32,26 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
            "GROUP BY t.category.id, t.category.name ORDER BY SUM(t.amount) DESC")
     List<Object[]> sumExpenseByCategory(Long userId, LocalDate startDate, LocalDate endDate);
 
+    @Query("SELECT t FROM Transaction t WHERE t.user.id = :userId " +
+           "AND t.category.name = :categoryName " +
+           "AND t.transactionDate BETWEEN :startDate AND :endDate " +
+           "ORDER BY t.transactionDate DESC, t.createdAt DESC")
+    List<Transaction> findByUserIdAndCategoryNameAndDateRange(
+            Long userId, String categoryName, LocalDate startDate, LocalDate endDate);
+
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t " +
+           "WHERE t.user.id = :userId AND t.category.name = :categoryName " +
+           "AND t.type = :type AND t.transactionDate BETWEEN :startDate AND :endDate")
+    BigDecimal sumByUserIdAndCategoryNameAndTypeAndDateRange(
+            Long userId, String categoryName, TransactionType type,
+            LocalDate startDate, LocalDate endDate);
+
+    @Query("SELECT YEAR(t.transactionDate), MONTH(t.transactionDate), SUM(t.amount) " +
+           "FROM Transaction t WHERE t.user.id = :userId AND t.type = :type " +
+           "GROUP BY YEAR(t.transactionDate), MONTH(t.transactionDate) " +
+           "ORDER BY YEAR(t.transactionDate), MONTH(t.transactionDate)")
+    List<Object[]> sumMonthlyByUserIdAndType(Long userId, TransactionType type);
+
     List<Transaction> findByUserIdAndTransactionDateBetween(Long userId, LocalDate start, LocalDate end);
 
     long countByUserId(Long userId);

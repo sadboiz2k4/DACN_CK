@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, X, Tag, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react'
-import { getTransactions, createTransaction, deleteTransaction } from '../api/transactions'
+import { Plus, Trash2, X, Tag, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Pencil } from 'lucide-react'
+import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from '../api/transactions'
 import { getWallets } from '../api/wallets'
 import api from '../api/axios'
 import { formatCurrency } from '../utils/format'
@@ -114,7 +114,7 @@ function MiniCalendar({ year, month, transactions, selectedDay, onSelectDay }) {
 }
 
 // ── Khối ngày ─────────────────────────────────────────────────────────────────
-function DayGroup({ date, txList, onDelete }) {
+function DayGroup({ date, txList, onDelete, onEdit }) {
   const [collapsed, setCollapsed] = useState(false)
   const income  = txList.filter(t=>t.type==='INCOME').reduce((s,t)=>s+Number(t.amount),0)
   const expense = txList.filter(t=>t.type==='EXPENSE').reduce((s,t)=>s+Number(t.amount),0)
@@ -162,11 +162,14 @@ function DayGroup({ date, txList, onDelete }) {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <span className={`font-semibold text-sm ${TYPE_COLORS[tx.type]}`}>
                   {tx.type==='INCOME'?'+':tx.type==='EXPENSE'?'-':''}
                   {formatCurrency(tx.amount)}
                 </span>
+                <button onClick={()=>onEdit(tx)} className="text-gray-200 hover:text-primary-500 transition-colors">
+                  <Pencil size={14}/>
+                </button>
                 <button onClick={()=>onDelete(tx.id)} className="text-gray-200 hover:text-red-500 transition-colors">
                   <Trash2 size={15}/>
                 </button>
@@ -180,8 +183,15 @@ function DayGroup({ date, txList, onDelete }) {
 }
 
 // ── Modal thêm giao dịch ──────────────────────────────────────────────────────
-function TransactionModal({ onClose, onSuccess, wallets, categories: initCats }) {
-  const [form, setForm] = useState({
+function TransactionModal({ onClose, onSuccess, wallets, categories: initCats, initialData }) {
+  const [form, setForm] = useState(() => initialData ? {
+    amount: String(initialData.amount),
+    type: initialData.type,
+    walletId: initialData.walletId || wallets[0]?.id || '',
+    categoryId: initialData.categoryId || '',
+    note: initialData.note || '',
+    transactionDate: initialData.transactionDate || new Date().toISOString().split('T')[0],
+  } : {
     amount:'', type:'EXPENSE', walletId:wallets[0]?.id||'',
     categoryId:'', note:'', transactionDate:new Date().toISOString().split('T')[0],
   })
@@ -196,8 +206,14 @@ function TransactionModal({ onClose, onSuccess, wallets, categories: initCats })
   const handleSubmit = async (e) => {
     e.preventDefault(); setLoading(true)
     try {
-      await createTransaction({...form, amount:Number(form.amount)})
-      toast.success('Thêm giao dịch thành công!'); onSuccess()
+      if (initialData) {
+        await updateTransaction(initialData.id, {...form, amount:Number(form.amount)})
+        toast.success('Đã cập nhật giao dịch!')
+      } else {
+        await createTransaction({...form, amount:Number(form.amount)})
+        toast.success('Thêm giao dịch thành công!')
+      }
+      onSuccess()
     } catch { toast.error('Có lỗi xảy ra') }
     finally { setLoading(false) }
   }
@@ -220,7 +236,7 @@ function TransactionModal({ onClose, onSuccess, wallets, categories: initCats })
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Thêm giao dịch</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{initialData ? 'Sửa giao dịch' : 'Thêm giao dịch'}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
@@ -296,7 +312,7 @@ function TransactionModal({ onClose, onSuccess, wallets, categories: initCats })
           <div className="flex gap-3 pt-1">
             <button type="button" className="btn-secondary flex-1" onClick={onClose}>Hủy</button>
             <button type="submit" className="btn-primary flex-1" disabled={loading}>
-              {loading?'Đang lưu...':'Lưu'}
+              {loading ? 'Đang lưu...' : initialData ? 'Cập nhật' : 'Lưu'}
             </button>
           </div>
         </form>
@@ -311,6 +327,7 @@ export default function Transactions() {
   const [wallets, setWallets] = useState([])
   const [categories, setCategories] = useState([])
   const [showModal, setShowModal] = useState(false)
+  const [editingTx, setEditingTx] = useState(null)
   const [filterType, setFilterType] = useState('ALL')
   const [selectedDay, setSelectedDay] = useState(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
@@ -427,7 +444,9 @@ export default function Transactions() {
         </div>
       ) : (
         grouped.map(([date,txList])=>(
-          <DayGroup key={date} date={date} txList={txList} onDelete={id => setConfirmDeleteId(id)}/>
+          <DayGroup key={date} date={date} txList={txList}
+            onDelete={id => setConfirmDeleteId(id)}
+            onEdit={tx => setEditingTx(tx)}/>
         ))
       )}
 
@@ -436,6 +455,15 @@ export default function Transactions() {
           wallets={wallets} categories={categories}
           onClose={()=>setShowModal(false)}
           onSuccess={()=>{setShowModal(false);fetchData()}}
+        />
+      )}
+
+      {editingTx && (
+        <TransactionModal
+          wallets={wallets} categories={categories}
+          initialData={editingTx}
+          onClose={()=>setEditingTx(null)}
+          onSuccess={()=>{setEditingTx(null);fetchData()}}
         />
       )}
 
