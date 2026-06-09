@@ -23,6 +23,8 @@ jwt:
 ai:
   service:
     url: ${AI_SERVICE_URL:http://localhost:8000}
+  gemini:
+    key: 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
 
 logging:
   level:

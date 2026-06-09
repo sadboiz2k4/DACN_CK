@@ -21,6 +21,7 @@ public class TransactionRequest {
     private Long walletId;
 
     private Long categoryId;
+    private String categoryName;
     private String note;
     private LocalDate transactionDate;
     private Long toWalletId;
