@@ -36,6 +36,25 @@ public class TransactionController {
         return ResponseEntity.ok(transactionService.create(user, request));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<TransactionResponse> updateTransaction(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id,
+            @Valid @RequestBody TransactionRequest request) {
+        return ResponseEntity.ok(transactionService.update(user, id, request));
+    }
+
+    @GetMapping("/by-category")
+    public ResponseEntity<?> getByCategory(
+            @AuthenticationPrincipal User user,
+            @RequestParam String categoryName,
+            @RequestParam(defaultValue = "0") int month,
+            @RequestParam(defaultValue = "0") int year) {
+        if (month == 0) month = java.time.LocalDate.now().getMonthValue();
+        if (year == 0) year = java.time.LocalDate.now().getYear();
+        return ResponseEntity.ok(transactionService.getByCategory(user, categoryName, month, year));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTransaction(@AuthenticationPrincipal User user, @PathVariable Long id) {
         transactionService.delete(user, id);

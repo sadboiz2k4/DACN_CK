@@ -61,11 +61,23 @@ function Message({ msg, onConfirm, onCancel }) {
 }
 
 export default function AIAssistant() {
-  const [messages, setMessages] = useState([{
+  const INIT_MSG = {
     id: 'init',
     role: 'assistant',
     content: 'Xin chào! Tôi là trợ lý SmartSpend. Bạn có thể nhập văn bản, nhấn 🎤 để nói, hoặc 📷 để upload hóa đơn.\n\nVí dụ: "hôm nay ăn phở 45k", "lương tháng 8 triệu"',
-  }])
+  }
+
+  const [messages, setMessages] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ai_chat_history')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        // Remove pending confirm buttons since pendingTxRef is reset on refresh
+        return parsed.map(m => ({ ...m, awaitConfirm: false }))
+      }
+    } catch {}
+    return [INIT_MSG]
+  })
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [isListening, setIsListening] = useState(false)
@@ -78,6 +90,12 @@ export default function AIAssistant() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('ai_chat_history', JSON.stringify(messages))
+    } catch {}
   }, [messages])
 
   const addMessage = useCallback((msg) => {

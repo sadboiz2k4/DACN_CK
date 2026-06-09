@@ -1,4 +1,9 @@
-import easyocr
+try:
+    import easyocr
+    EASYOCR_AVAILABLE = True
+except Exception:
+    EASYOCR_AVAILABLE = False
+
 import google.generativeai as genai
 from fastapi import UploadFile
 from PIL import Image
@@ -13,6 +18,8 @@ reader = None
 
 def get_reader():
     global reader
+    if not EASYOCR_AVAILABLE:
+        raise RuntimeError("easyocr không khả dụng trên máy này (lỗi torch DLL)")
     if reader is None:
         reader = easyocr.Reader(['vi', 'en'], gpu=False)
     return reader

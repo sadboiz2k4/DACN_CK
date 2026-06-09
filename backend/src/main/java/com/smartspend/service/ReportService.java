@@ -79,6 +79,37 @@ public class ReportService {
                 }).toList();
     }
 
+    public List<Map<String, Object>> getMonthlyTrend(User user) {
+        List<Object[]> expenseRows = transactionRepository.sumMonthlyByUserIdAndType(user.getId(), TransactionType.EXPENSE);
+        List<Object[]> incomeRows  = transactionRepository.sumMonthlyByUserIdAndType(user.getId(), TransactionType.INCOME);
+
+        Map<String, Map<String, Object>> merged = new java.util.LinkedHashMap<>();
+
+        expenseRows.forEach(row -> {
+            String key = row[0] + "-" + String.format("%02d", row[1]);
+            merged.computeIfAbsent(key, k -> {
+                Map<String, Object> m = new HashMap<>();
+                m.put("month", key);
+                m.put("expense", BigDecimal.ZERO);
+                m.put("income", BigDecimal.ZERO);
+                return m;
+            }).put("expense", row[2]);
+        });
+
+        incomeRows.forEach(row -> {
+            String key = row[0] + "-" + String.format("%02d", row[1]);
+            merged.computeIfAbsent(key, k -> {
+                Map<String, Object> m = new HashMap<>();
+                m.put("month", key);
+                m.put("expense", BigDecimal.ZERO);
+                m.put("income", BigDecimal.ZERO);
+                return m;
+            }).put("income", row[2]);
+        });
+
+        return new java.util.ArrayList<>(merged.values());
+    }
+
     private LocalDate[] getDateRange(String period) {
         LocalDate now = LocalDate.now();
         return switch (period) {

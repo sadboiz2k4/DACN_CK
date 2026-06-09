@@ -74,6 +74,56 @@ public class TransactionService {
                 .map(this::toResponse);
     }
 
+    public java.util.List<TransactionResponse> getByCategory(User user, String categoryName, int month, int year) {
+        java.time.YearMonth ym = java.time.YearMonth.of(year, month);
+        return transactionRepository
+                .findByUserIdAndCategoryNameAndDateRange(user.getId(), categoryName, ym.atDay(1), ym.atEndOfMonth())
+                .stream().map(this::toResponse).toList();
+    }
+
+    @Transactional
+    public TransactionResponse update(User user, Long id, TransactionRequest request) {
+        Transaction tx = transactionRepository.findById(id)
+                .filter(t -> t.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new ResourceNotFoundException("Giao dịch không tồn tại"));
+
+        Wallet oldWallet = tx.getWallet();
+        // Hoàn tác ảnh hưởng ví cũ
+        if (tx.getType() == TransactionType.INCOME)
+            oldWallet.setBalance(oldWallet.getBalance().subtract(tx.getAmount()));
+        else if (tx.getType() == TransactionType.EXPENSE)
+            oldWallet.setBalance(oldWallet.getBalance().add(tx.getAmount()));
+
+        Wallet newWallet = walletService.getWalletByIdAndUser(request.getWalletId(), user.getId());
+        boolean sameWallet = oldWallet.getId().equals(newWallet.getId());
+        Wallet targetWallet = sameWallet ? oldWallet : newWallet;
+
+        // Áp dụng ảnh hưởng ví mới
+        if (request.getType() == TransactionType.INCOME)
+            targetWallet.setBalance(targetWallet.getBalance().add(request.getAmount()));
+        else if (request.getType() == TransactionType.EXPENSE)
+            targetWallet.setBalance(targetWallet.getBalance().subtract(request.getAmount()));
+
+        walletRepository.save(oldWallet);
+        if (!sameWallet) walletRepository.save(newWallet);
+
+        Category category = null;
+        if (request.getCategoryId() != null) {
+            category = categoryRepository.findById(request.getCategoryId()).orElse(null);
+        } else if (request.getCategoryName() != null && !request.getCategoryName().isBlank()) {
+            category = categoryRepository.findByNameAndUserId(request.getCategoryName(), user.getId()).orElse(null);
+        }
+
+        tx.setAmount(request.getAmount());
+        tx.setType(request.getType());
+        tx.setWallet(newWallet);
+        tx.setCategory(category);
+        tx.setNote(request.getNote());
+        if (request.getTransactionDate() != null) tx.setTransactionDate(request.getTransactionDate());
+
+        return toResponse(transactionRepository.save(tx));
+    }
+
     @Transactional
     public void delete(User user, Long id) {
         Transaction transaction = transactionRepository.findById(id)
