@@ -33,10 +33,15 @@ public class TransactionService {
         }
 
         Wallet wallet = walletService.getWalletByIdAndUser(request.getWalletId(), user.getId());
+
         Category category = null;
         if (request.getCategoryId() != null) {
             category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Danh mục không tồn tại"));
+        } else if (request.getCategoryName() != null && !request.getCategoryName().isBlank()) {
+            category = categoryRepository.findByNameAndUserId(request.getCategoryName(), user.getId())
+                    .orElseGet(() -> categoryRepository.findByNameAndUserId("Khác", user.getId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Danh mục mặc định 'Khác' không tồn tại trong hệ thống")));
         }
 
         Transaction transaction = Transaction.builder()
