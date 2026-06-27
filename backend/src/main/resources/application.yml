@@ -24,7 +24,8 @@ ai:
   service:
     url: ${AI_SERVICE_URL:http://localhost:8000}
   gemini:
-    key: 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
+    key: ${AI_KEY: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}
+#    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
 
 logging:
   level:

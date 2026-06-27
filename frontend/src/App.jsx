@@ -13,6 +13,7 @@ import AdminDashboard from './pages/Admin/AdminDashboard'
 import Categories from './pages/Categories'
 import Budget from './pages/Budget'
 import Forecast from './pages/Forecast'
+import Debts from './pages/Debts'
 
 function Spinner() {
   return (
@@ -57,6 +58,7 @@ function AppRoutes() {
         <Route path="categories"    element={<Categories />} />
         <Route path="budget"        element={<Budget />} />
         <Route path="forecast"      element={<Forecast />} />
+        <Route path="debts"         element={<Debts />} />
         <Route path="profile"       element={<Profile />} />
         <Route path="admin"         element={<AdminRoute><AdminDashboard /></AdminRoute>} />
       </Route>
