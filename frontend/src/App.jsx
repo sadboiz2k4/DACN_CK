@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import AppLayout from './components/Layout/AppLayout'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import Transactions from './pages/Transactions'
 import Wallets from './pages/Wallets'
@@ -48,6 +50,8 @@ function AppRoutes() {
     <Routes>
       <Route path="/login"    element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+      <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+      <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
 
       <Route path="/" element={<PrivateRoute><AppLayout /></PrivateRoute>}>
         <Route index                element={<Dashboard />} />
