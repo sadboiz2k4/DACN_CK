@@ -12,9 +12,28 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:testsystem2004@gmail.com}
+    password: ${MAIL_PASSWORD:nynubzkhivjlusld}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          ssl:
+            trust: ${MAIL_HOST:smtp.gmail.com}
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
 
 server:
   port: 8080
+
+app:
+  frontend-url: ${APP_FRONTEND_URL:http://localhost:3000}
 
 jwt:
   secret: ${JWT_SECRET:smartspend-jwt-secret-key-2024-very-long-and-secure}
@@ -24,8 +43,10 @@ ai:
   service:
     url: ${AI_SERVICE_URL:http://localhost:8000}
   gemini:
-    key: ${AI_KEY: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}
-#    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
+    key: ${AI_KEY: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}
+
+google:
+  client-id: ${GOOGLE_CLIENT_ID:1070878898814-svtnq77h0q7drqf9lt1803se85kj1487.apps.googleusercontent.com}
 
 logging:
   level:
