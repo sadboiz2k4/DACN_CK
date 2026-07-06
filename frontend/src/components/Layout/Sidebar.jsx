@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, ArrowLeftRight, Wallet, BarChart3,
-  Bot, LogOut, ShieldCheck, UserCircle, Tag, PiggyBank, TrendingUp, Receipt,
+  Bot, LogOut, ShieldCheck, UserCircle, Tag, PiggyBank, TrendingUp, Receipt, CalendarClock,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import NotificationBell from '../common/NotificationBell'
@@ -15,8 +15,9 @@ const navItems = [
   { to: '/ai',           icon: Bot,             label: 'Trợ lý AI'  },
   { to: '/budget',       icon: PiggyBank,       label: 'Ngân sách'  },
   { to: '/forecast',     icon: TrendingUp,      label: 'Dự báo'     },
-  { to: '/debts',        icon: Receipt,         label: 'Sổ nợ'      },
-  { to: '/categories',   icon: Tag,             label: 'Danh mục'   },
+  { to: '/debts',        icon: Receipt,        label: 'Sổ nợ'           },
+  { to: '/recurring',    icon: CalendarClock,  label: 'Hóa đơn định kỳ' },
+  { to: '/categories',   icon: Tag,            label: 'Danh mục'         },
 ]
 
 function NavItem({ to, icon: Icon, label, end = false }) {

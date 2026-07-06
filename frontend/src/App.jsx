@@ -16,6 +16,7 @@ import Categories from './pages/Categories'
 import Budget from './pages/Budget'
 import Forecast from './pages/Forecast'
 import Debts from './pages/Debts'
+import Recurring from './pages/Recurring'
 
 function Spinner() {
   return (
@@ -63,6 +64,7 @@ function AppRoutes() {
         <Route path="budget"        element={<Budget />} />
         <Route path="forecast"      element={<Forecast />} />
         <Route path="debts"         element={<Debts />} />
+        <Route path="recurring"     element={<Recurring />} />
         <Route path="profile"       element={<Profile />} />
         <Route path="admin"         element={<AdminRoute><AdminDashboard /></AdminRoute>} />
       </Route>
