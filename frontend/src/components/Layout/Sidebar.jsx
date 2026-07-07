@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, ArrowLeftRight, Wallet, BarChart3,
-  Bot, LogOut, ShieldCheck, UserCircle, Tag, PiggyBank, TrendingUp, Receipt, CalendarClock,
+  Bot, LogOut, ShieldCheck, UserCircle, Tag, PiggyBank, TrendingUp, Receipt,
+  CalendarClock, UsersRound, FileSpreadsheet, Trophy,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import NotificationBell from '../common/NotificationBell'
@@ -15,9 +16,12 @@ const navItems = [
   { to: '/ai',           icon: Bot,             label: 'Trợ lý AI'  },
   { to: '/budget',       icon: PiggyBank,       label: 'Ngân sách'  },
   { to: '/forecast',     icon: TrendingUp,      label: 'Dự báo'     },
-  { to: '/debts',        icon: Receipt,        label: 'Sổ nợ'           },
-  { to: '/recurring',    icon: CalendarClock,  label: 'Hóa đơn định kỳ' },
-  { to: '/categories',   icon: Tag,            label: 'Danh mục'         },
+  { to: '/debts',        icon: Receipt,         label: 'Sổ nợ'      },
+  { to: '/recurring',    icon: CalendarClock,   label: 'Hóa đơn định kỳ' },
+  { to: '/split-bills',  icon: UsersRound,      label: 'Chia tiền'  },
+  { to: '/bank-imports', icon: FileSpreadsheet, label: 'Import sao kê' },
+  { to: '/achievements', icon: Trophy,          label: 'Thành tích' },
+  { to: '/categories',   icon: Tag,             label: 'Danh mục'   },
 ]
 
 function NavItem({ to, icon: Icon, label, end = false }) {
@@ -45,7 +49,6 @@ export default function Sidebar() {
 
   return (
     <aside className="w-64 bg-white border-r border-gray-100 flex flex-col h-screen sticky top-0">
-      {/* Logo */}
       <div className="p-5 border-b border-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -54,12 +57,10 @@ export default function Sidebar() {
             </div>
             <span className="font-bold text-gray-900 text-lg">SmartSpend</span>
           </div>
-          {/* Notification Bell in header */}
           <NotificationBell />
         </div>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 p-4 space-y-0.5 overflow-y-auto">
         {navItems.map(item => <NavItem key={item.to} {...item} />)}
 
@@ -72,7 +73,6 @@ export default function Sidebar() {
         </div>
       </nav>
 
-      {/* User footer */}
       <div className="p-4 border-t border-gray-100">
         <div className="flex items-center gap-3 mb-3 px-1">
           <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">

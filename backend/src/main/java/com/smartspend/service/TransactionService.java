@@ -3,6 +3,7 @@ package com.smartspend.service;
 import com.smartspend.dto.transaction.TransactionRequest;
 import com.smartspend.dto.transaction.TransactionResponse;
 import com.smartspend.entity.*;
+import com.smartspend.entity.PointEvent.ActionType;
 import com.smartspend.entity.Transaction.TransactionType;
 import com.smartspend.exception.ResourceNotFoundException;
 import com.smartspend.repository.CategoryRepository;
@@ -25,6 +26,7 @@ public class TransactionService {
     private final WalletRepository walletRepository;
     private final CategoryRepository categoryRepository;
     private final WalletService walletService;
+    private final GamificationService gamificationService;
 
     @Transactional
     public TransactionResponse create(User user, TransactionRequest request) {
@@ -65,7 +67,15 @@ public class TransactionService {
         }
 
         walletRepository.save(wallet);
-        return toResponse(transactionRepository.save(transaction));
+        transaction = transactionRepository.save(transaction);
+        gamificationService.awardPoints(
+                user,
+                ActionType.TRANSACTION_CREATED,
+                10,
+                "Ghi giao dịch",
+                "Bạn vừa cập nhật lịch sử chi tiêu",
+                transaction.getId());
+        return toResponse(transaction);
     }
 
     public Page<TransactionResponse> getTransactions(User user, Pageable pageable) {
