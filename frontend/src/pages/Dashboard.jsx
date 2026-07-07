@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { TrendingUp, TrendingDown, Wallet, ArrowLeftRight, ChevronRight, X } from 'lucide-react'
+import { TrendingUp, TrendingDown, Wallet, ArrowLeftRight, ChevronRight, X, Trophy, Flame, Star } from 'lucide-react'
 import Spinner from '../components/common/Spinner'
 import { CategoryIcon } from '../utils/icons'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { getSummary, getTimeline, getCategoryBreakdown } from '../api/reports'
 import { getTransactions } from '../api/transactions'
+import { getGamification } from '../api/gamification'
 import { formatCurrency, formatDate, formatShortDate } from '../utils/format'
 import { useAuth } from '../context/AuthContext'
 
@@ -88,6 +89,7 @@ export default function Dashboard() {
   const [recentTx, setRecentTx] = useState([])
   const [categories, setCategories] = useState([])
   const [allTx, setAllTx] = useState([])
+  const [game, setGame] = useState(null)
   const [period, setPeriod] = useState('month')
   const [loading, setLoading] = useState(true)
   const [selectedCat, setSelectedCat] = useState(null)
@@ -96,12 +98,13 @@ export default function Dashboard() {
     const fetchData = async () => {
       setLoading(true)
       try {
-        const [s, t, txRecent, cats, txAll] = await Promise.all([
+        const [s, t, txRecent, cats, txAll, gameRes] = await Promise.all([
           getSummary(period),
           getTimeline(period),
           getTransactions(0, 5),
           getCategoryBreakdown(period),
           getTransactions(0, 500),
+          getGamification().catch(() => null),
         ])
         setSummary(s.data)
         setTimeline(t.data.map(d => ({
@@ -113,6 +116,7 @@ export default function Dashboard() {
         setRecentTx(txRecent.data.content || [])
         setCategories(cats.data)
         setAllTx(txAll.data.content || [])
+        setGame(gameRes?.data || null)
       } catch {}
       setLoading(false)
     }
@@ -144,6 +148,33 @@ export default function Dashboard() {
         <StatCard title="Tổng chi"    value={summary?.totalExpense}        icon={TrendingDown}  color="bg-red-500" />
         <StatCard title="Tiết kiệm"   value={summary?.netBalance}          icon={ArrowLeftRight} color="bg-blue-500" />
       </div>
+
+      {game?.profile && (
+        <div className="card mb-6 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary-600">
+                <Trophy size={20} className="text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">Level {game.profile.level}</p>
+                <p className="text-sm text-gray-500">{game.profile.totalPoints} điểm · {game.profile.levelProgress}% tới level tiếp theo</p>
+              </div>
+            </div>
+            <div className="flex gap-3 text-sm">
+              <div className="flex items-center gap-2 rounded-lg bg-orange-50 px-3 py-2 text-orange-700">
+                <Flame size={16} /> {game.profile.currentStreak} ngày
+              </div>
+              <div className="flex items-center gap-2 rounded-lg bg-violet-50 px-3 py-2 text-violet-700">
+                <Star size={16} /> {game.badges?.filter(b => b.earned).length || 0} huy hiệu
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-gray-100">
+            <div className="h-full rounded-full bg-primary-600" style={{ width: `${game.profile.levelProgress || 0}%` }} />
+          </div>
+        </div>
+      )}
 
       {/* Chart + Category breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">

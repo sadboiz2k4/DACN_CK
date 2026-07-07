@@ -17,6 +17,9 @@ import Budget from './pages/Budget'
 import Forecast from './pages/Forecast'
 import Debts from './pages/Debts'
 import Recurring from './pages/Recurring'
+import SplitBills from './pages/SplitBills'
+import BankImports from './pages/BankImports'
+import Achievements from './pages/Achievements'
 
 function Spinner() {
   return (
@@ -65,6 +68,9 @@ function AppRoutes() {
         <Route path="forecast"      element={<Forecast />} />
         <Route path="debts"         element={<Debts />} />
         <Route path="recurring"     element={<Recurring />} />
+        <Route path="split-bills"   element={<SplitBills />} />
+        <Route path="bank-imports"  element={<BankImports />} />
+        <Route path="achievements"  element={<Achievements />} />
         <Route path="profile"       element={<Profile />} />
         <Route path="admin"         element={<AdminRoute><AdminDashboard /></AdminRoute>} />
       </Route>
