@@ -31,5 +31,9 @@ export const scanReceipt = (formData) => {
   });
 };
 
+export const getChatHistory = () => aiApi.get('/chat-history')
+
+export const saveChatHistory = (messages) => aiApi.put('/chat-history', messages)
+
 export const getForecast = (userId) => aiApi.get(`/forecast/${userId}`)
 export const getAnomalies = (userId) => aiApi.get(`/anomalies/${userId}`)

@@ -31,6 +31,11 @@ public class User implements UserDetails {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+    @Lob
+    @Column(name = "ai_chat_history", columnDefinition = "LONGTEXT")
+    @Builder.Default
+    private String aiChatHistory = "[]";
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role = Role.USER;
@@ -46,12 +51,18 @@ public class User implements UserDetails {
 
     @PrePersist
     protected void onCreate() {
+        if (aiChatHistory == null || aiChatHistory.isBlank()) {
+            aiChatHistory = "[]";
+        }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
+        if (aiChatHistory == null || aiChatHistory.isBlank()) {
+            aiChatHistory = "[]";
+        }
         updatedAt = LocalDateTime.now();
     }
 

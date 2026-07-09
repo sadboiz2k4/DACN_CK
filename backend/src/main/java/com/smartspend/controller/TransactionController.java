@@ -6,6 +6,8 @@ import com.smartspend.entity.User;
 import com.smartspend.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -17,6 +19,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/transactions")
 @RequiredArgsConstructor
 public class TransactionController {
+
+    private static final Logger log = LoggerFactory.getLogger(TransactionController.class);
 
     private final TransactionService transactionService;
 
@@ -33,6 +37,12 @@ public class TransactionController {
     public ResponseEntity<TransactionResponse> createTransaction(
             @AuthenticationPrincipal User user,
             @Valid @RequestBody TransactionRequest request) {
+        log.info("createTransaction userId={} walletId={} amount={} type={} source={}",
+            user != null ? user.getId() : null,
+            request.getWalletId(),
+            request.getAmount(),
+            request.getType(),
+            request.getSource());
         return ResponseEntity.ok(transactionService.create(user, request));
     }
 

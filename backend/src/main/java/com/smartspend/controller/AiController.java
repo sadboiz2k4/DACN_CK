@@ -1,9 +1,11 @@
 package com.smartspend.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartspend.dto.ai.AiParseResponse;
 import com.smartspend.dto.ai.TransactionAiResponse;
 import com.smartspend.entity.User;
+import com.smartspend.repository.UserRepository;
 import com.smartspend.service.GroqService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,7 +15,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -25,6 +30,9 @@ public class AiController {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Value("${ai.service.url}")
     private String aiServiceUrl;
@@ -93,5 +101,37 @@ public class AiController {
         }
         com.smartspend.dto.ai.OcrReceiptResponse result = groqService.scanReceipt(file);
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/chat-history")
+    public ResponseEntity<List<Map<String, Object>>> getChatHistory(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(readChatHistory(user));
+    }
+
+    @PutMapping("/chat-history")
+    public ResponseEntity<Map<String, Object>> saveChatHistory(@AuthenticationPrincipal User user,
+                                                               @RequestBody List<Map<String, Object>> messages) {
+        try {
+            User dbUser = userRepository.findById(user.getId())
+                    .orElseThrow(() -> new IllegalStateException("User not found"));
+            dbUser.setAiChatHistory(objectMapper.writeValueAsString(messages == null ? List.of() : messages));
+            userRepository.save(dbUser);
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    private List<Map<String, Object>> readChatHistory(User user) {
+        try {
+            Optional<User> dbUser = userRepository.findById(user.getId());
+            if (dbUser.isEmpty() || dbUser.get().getAiChatHistory() == null || dbUser.get().getAiChatHistory().isBlank()) {
+                return List.of();
+            }
+
+            return objectMapper.readValue(dbUser.get().getAiChatHistory(), new TypeReference<List<Map<String, Object>>>() {});
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
     }
 }
