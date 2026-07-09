@@ -110,9 +110,14 @@ export default function Categories() {
 
   const fetchCategories = async () => {
     setLoading(true)
-    const { data } = await api.get('/categories')
-    setCategories(data)
-    setLoading(false)
+    try {
+      const { data } = await api.get('/categories')
+      setCategories(data)
+    } catch (error) {
+      toast.error(error?.response?.status === 403 ? 'Bạn chưa đăng nhập hoặc phiên đã hết hạn' : 'Không tải được danh mục')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { fetchCategories() }, [])

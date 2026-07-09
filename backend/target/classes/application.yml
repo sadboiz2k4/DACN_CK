@@ -1,8 +1,8 @@
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/smartspend?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true}
-    username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:root}
+    username: root
+    password:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -42,8 +42,8 @@ jwt:
 ai:
   service:
     url: ${AI_SERVICE_URL:http://localhost:8000}
-  gemini:
-    key: ${AI_KEY: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}
+  groq:
+    key: ${AI_KEY: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}
 
 google:
   client-id: ${GOOGLE_CLIENT_ID:1070878898814-svtnq77h0q7drqf9lt1803se85kj1487.apps.googleusercontent.com}

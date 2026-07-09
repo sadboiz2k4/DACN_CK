@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Send, Upload, Bot, User, Loader2, Mic, MicOff, X } from 'lucide-react'
-import { parseTransaction, parseVoiceTransaction, scanReceipt } from '../api/ai'
+import { getChatHistory, parseTransaction, parseVoiceTransaction, saveChatHistory, scanReceipt } from '../api/ai'
 import { createTransaction } from '../api/transactions'
 import { getWallets } from '../api/wallets'
 import { formatCurrency } from '../utils/format'
 import toast from 'react-hot-toast'
 import clsx from 'clsx'
+import { useAuth } from '../context/AuthContext'
 
 function Message({ msg, onConfirm, onCancel }) {
   return (
@@ -61,26 +63,21 @@ function Message({ msg, onConfirm, onCancel }) {
 }
 
 export default function AIAssistant() {
+  const { user, loading: authLoading } = useAuth()
+  const navigate = useNavigate()
   const INIT_MSG = {
     id: 'init',
     role: 'assistant',
     content: 'Xin chào! Tôi là trợ lý SmartSpend. Bạn có thể nhập văn bản, nhấn 🎤 để nói, hoặc 📷 để upload hóa đơn.\n\nVí dụ: "hôm nay ăn phở 45k", "lương tháng 8 triệu"',
   }
 
-  const [messages, setMessages] = useState(() => {
-    try {
-      const saved = localStorage.getItem('ai_chat_history')
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        // Remove pending confirm buttons since pendingTxRef is reset on refresh
-        return parsed.map(m => ({ ...m, awaitConfirm: false }))
-      }
-    } catch {}
-    return [INIT_MSG]
-  })
+  const historyKey = user ? `ai_chat_history:${user.id ?? user.email}` : null
+
+  const [messages, setMessages] = useState([INIT_MSG])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [isListening, setIsListening] = useState(false)
+  const [hydrated, setHydrated] = useState(false)
 
   const fileRef = useRef()
   const bottomRef = useRef()
@@ -89,14 +86,73 @@ export default function AIAssistant() {
   const pendingTxRef = useRef({})
 
   useEffect(() => {
+    if (authLoading) return
+
+    let cancelled = false
+
+    const hydrate = async () => {
+      if (!historyKey) {
+        setMessages([INIT_MSG])
+        setHydrated(true)
+        return
+      }
+
+      try {
+        const { data } = await getChatHistory()
+        if (cancelled) return
+
+        if (Array.isArray(data) && data.length > 0) {
+          setMessages(data.map(m => ({ ...m, awaitConfirm: false })))
+          setHydrated(true)
+          return
+        }
+
+        const saved = localStorage.getItem(historyKey) || localStorage.getItem('ai_chat_history')
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          const normalized = parsed.map(m => ({ ...m, awaitConfirm: false }))
+          setMessages(normalized)
+          await saveChatHistory(normalized).catch(() => {})
+        } else {
+          setMessages([INIT_MSG])
+        }
+      } catch {
+        const saved = historyKey ? localStorage.getItem(historyKey) : null
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved)
+            setMessages(parsed.map(m => ({ ...m, awaitConfirm: false })))
+          } catch {
+            setMessages([INIT_MSG])
+          }
+        } else {
+          setMessages([INIT_MSG])
+        }
+      } finally {
+        if (!cancelled) {
+          setHydrated(true)
+        }
+      }
+    }
+
+    hydrate()
+
+    return () => {
+      cancelled = true
+    }
+  }, [authLoading, historyKey])
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
   useEffect(() => {
+    if (!historyKey || !hydrated) return
     try {
-      localStorage.setItem('ai_chat_history', JSON.stringify(messages))
+      localStorage.setItem(historyKey, JSON.stringify(messages))
     } catch {}
-  }, [messages])
+    saveChatHistory(messages).catch(() => {})
+  }, [messages, historyKey, hydrated])
 
   const addMessage = useCallback((msg) => {
     setMessages(prev => [...prev, { id: Date.now() + Math.random(), ...msg }])
@@ -213,7 +269,7 @@ export default function AIAssistant() {
       }
 
       await createTransaction({
-        amount: tx.amount,
+        amount: Math.abs(tx.amount),
         type: tx.type || 'EXPENSE',
         walletId: wallets[0].id,
         categoryName: tx.categoryName,
@@ -223,11 +279,17 @@ export default function AIAssistant() {
       })
       toast.success('Đã lưu giao dịch!')
       addMessage({ role: 'assistant', content: `✅ Đã lưu thành công! ${tx.type === 'INCOME' ? '+' : '-'}${formatCurrency(tx.amount)} vào ví "${wallets[0].name}".` })
-    } catch {
+    } catch (error) {
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
+        toast.error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại')
+        navigate('/login', { replace: true })
+        return
+      }
+      console.error('Lỗi lưu giao dịch:', error?.response?.status, error?.response?.data)
       toast.error('Không thể lưu giao dịch')
     }
     delete pendingTxRef.current[msgId]
-  }, [addMessage])
+  }, [addMessage, navigate])
 
   const handleCancel = useCallback((msgId) => {
     setMessages(prev => prev.map(m => m.id === msgId ? { ...m, awaitConfirm: false } : m))

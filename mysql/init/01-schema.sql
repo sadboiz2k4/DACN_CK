@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(255) NOT NULL,
     avatar_url VARCHAR(500),
+    ai_chat_history LONGTEXT,
     role ENUM('USER', 'ADMIN') DEFAULT 'USER',
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

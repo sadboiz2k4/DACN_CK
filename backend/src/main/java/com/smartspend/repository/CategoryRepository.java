@@ -10,6 +10,8 @@ import java.util.Optional;
 
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 
+    boolean existsByIsDefaultTrueAndTypeAndNameIgnoreCase(CategoryType type, String name);
+
     @Query("SELECT c FROM Category c WHERE c.isDefault = true OR c.user.id = :userId ORDER BY c.type, c.name")
     List<Category> findAllByUserId(Long userId);
 
