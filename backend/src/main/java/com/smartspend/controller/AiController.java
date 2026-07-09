@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartspend.dto.ai.AiParseResponse;
 import com.smartspend.dto.ai.TransactionAiResponse;
 import com.smartspend.entity.User;
-import com.smartspend.service.GeminiService;
+import com.smartspend.service.GroqService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +21,7 @@ import java.util.Map;
 public class AiController {
 
     @Autowired
-    private GeminiService geminiService;
+    private GroqService groqService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -36,7 +36,7 @@ public class AiController {
             return ResponseEntity.badRequest().body(new AiParseResponse(false, "Văn bản trống", null));
         }
 
-        TransactionAiResponse txResponse = geminiService.parseNaturalLanguage(text);
+        TransactionAiResponse txResponse = groqService.parseNaturalLanguage(text);
 
         if (txResponse != null && txResponse.getAmount() != null) {
             return ResponseEntity.ok(new AiParseResponse(true, "Thành công", txResponse));
@@ -46,7 +46,7 @@ public class AiController {
     }
     @PostMapping("/parse-voice")
     public ResponseEntity<AiParseResponse> parseVoiceTransaction(@RequestParam("file") MultipartFile file) {
-        String transcribedText = geminiService.transcribeAudio(file);
+        String transcribedText = groqService.transcribeAudio(file);
 
         if (transcribedText == null || transcribedText.isBlank()) {
             return ResponseEntity.badRequest().body(new AiParseResponse(false, "Không thể nghe hoặc dịch được giọng nói của bạn.", null));
@@ -54,7 +54,7 @@ public class AiController {
 
         System.out.println("Văn bản AI nghe được từ Whisper: " + transcribedText);
 
-        com.smartspend.dto.ai.TransactionAiResponse result = geminiService.parseNaturalLanguage(transcribedText);
+        com.smartspend.dto.ai.TransactionAiResponse result = groqService.parseNaturalLanguage(transcribedText);
 
         if (result != null && result.getAmount() != null) {
             return ResponseEntity.ok(new AiParseResponse(true, transcribedText, result));
@@ -91,7 +91,7 @@ public class AiController {
         if (file == null || file.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Không có file ảnh"));
         }
-        com.smartspend.dto.ai.OcrReceiptResponse result = geminiService.scanReceipt(file);
+        com.smartspend.dto.ai.OcrReceiptResponse result = groqService.scanReceipt(file);
         return ResponseEntity.ok(result);
     }
 }

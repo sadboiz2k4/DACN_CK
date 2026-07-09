@@ -11,7 +11,6 @@ import java.net.http.HttpResponse;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,9 +25,9 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 @Service
 @RequiredArgsConstructor
-public class GeminiService {
+public class GroqService {
 
-    @Value("${ai.gemini.key}")
+    @Value("${ai.groq.key}")
     private String apiKey;
 
     public com.smartspend.dto.ai.TransactionAiResponse parseNaturalLanguage(String text) {

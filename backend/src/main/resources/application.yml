@@ -42,7 +42,7 @@ jwt:
 ai:
   service:
     url: ${AI_SERVICE_URL:http://localhost:8000}
-  gemini:
+  groq:
     key: ${AI_KEY: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}
 
 google:
