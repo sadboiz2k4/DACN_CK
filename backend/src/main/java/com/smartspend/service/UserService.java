@@ -3,11 +3,15 @@ package com.smartspend.service;
 import com.smartspend.dto.user.ChangePasswordRequest;
 import com.smartspend.dto.user.UpdateProfileRequest;
 import com.smartspend.dto.user.UserProfileResponse;
+import com.smartspend.dto.user.UserSearchResponse;
 import com.smartspend.entity.User;
 import com.smartspend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +40,22 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public List<UserSearchResponse> searchUsers(User currentUser, String query) {
+        String keyword = query == null ? "" : query.trim();
+        if (keyword.length() < 2) {
+            return List.of();
+        }
+
+        return userRepository
+                .findByEmailContainingIgnoreCaseOrFullNameContainingIgnoreCase(
+                        keyword, keyword, PageRequest.of(0, 8))
+                .stream()
+                .filter(User::isActive)
+                .filter(u -> !u.getId().equals(currentUser.getId()))
+                .map(this::toSearchResponse)
+                .toList();
+    }
+
     private UserProfileResponse toResponse(User u) {
         return UserProfileResponse.builder()
                 .id(u.getId())
@@ -44,6 +64,15 @@ public class UserService {
                 .avatarUrl(u.getAvatarUrl())
                 .role(u.getRole())
                 .createdAt(u.getCreatedAt())
+                .build();
+    }
+
+    private UserSearchResponse toSearchResponse(User u) {
+        return UserSearchResponse.builder()
+                .id(u.getId())
+                .email(u.getEmail())
+                .fullName(u.getFullName())
+                .avatarUrl(u.getAvatarUrl())
                 .build();
     }
 }

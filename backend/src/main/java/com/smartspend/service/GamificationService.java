@@ -27,20 +27,38 @@ public class GamificationService {
     private static final List<BadgeDefinition> BADGES = List.of(
             new BadgeDefinition("FIRST_TX", "Bước đầu kỷ luật", "Tạo giao dịch đầu tiên", "receipt", 20,
                     stats -> stats.transactionCount >= 1),
+            new BadgeDefinition("TX_10", "Vào guồng ghi chép", "Tạo 10 giao dịch", "clipboard-list", 35,
+                    stats -> stats.transactionCount >= 10),
             new BadgeDefinition("TX_30", "Ghi chép đều tay", "Tạo 30 giao dịch", "list-checks", 60,
                     stats -> stats.transactionCount >= 30),
+            new BadgeDefinition("TX_100", "Sổ chi tiêu sống động", "Tạo 100 giao dịch", "notebook-tabs", 120,
+                    stats -> stats.transactionCount >= 100),
             new BadgeDefinition("STREAK_7", "Chuỗi 7 ngày", "Hoạt động 7 ngày liên tiếp", "flame", 70,
                     stats -> stats.currentStreak >= 7),
+            new BadgeDefinition("STREAK_14", "Hai tuần bền bỉ", "Hoạt động 14 ngày liên tiếp", "calendar-check", 100,
+                    stats -> stats.currentStreak >= 14),
+            new BadgeDefinition("STREAK_30", "Thói quen tháng", "Hoạt động 30 ngày liên tiếp", "sparkles", 180,
+                    stats -> stats.currentStreak >= 30),
             new BadgeDefinition("WALLET_MASTER", "Bậc thầy ví tiền", "Tạo ít nhất 3 ví", "wallet", 50,
                     stats -> stats.walletCount >= 3),
+            new BadgeDefinition("WALLET_COLLECTOR", "Quản lý nhiều nguồn tiền", "Tạo ít nhất 5 ví", "wallet-cards", 90,
+                    stats -> stats.walletCount >= 5),
             new BadgeDefinition("BUDGET_STARTER", "Biết đặt giới hạn", "Tạo ngân sách đầu tiên", "piggy-bank", 40,
                     stats -> stats.budgetEvents >= 1),
+            new BadgeDefinition("BUDGET_PLANNER", "Người lập kế hoạch", "Tạo 3 ngân sách", "target", 80,
+                    stats -> stats.budgetEvents >= 3),
             new BadgeDefinition("IMPORTER", "Chuyên gia sao kê", "Import sao kê đầu tiên", "file-spreadsheet", 50,
                     stats -> stats.importEvents >= 1),
+            new BadgeDefinition("IMPORT_5", "Dọn sao kê chăm chỉ", "Import 5 file sao kê", "folder-check", 100,
+                    stats -> stats.importEvents >= 5),
             new BadgeDefinition("SPLIT_STARTER", "Người chia bill", "Tạo bill chia tiền đầu tiên", "users", 40,
                     stats -> stats.splitBillEvents >= 1),
+            new BadgeDefinition("SPLIT_5", "Đi chơi có tổ chức", "Tạo 5 bill chia tiền", "users-round", 90,
+                    stats -> stats.splitBillEvents >= 5),
             new BadgeDefinition("SETTLEMENT_PRO", "Chốt kèo gọn gàng", "Hoàn tất một bill chia tiền", "check-circle", 60,
-                    stats -> stats.splitSettledEvents >= 1)
+                    stats -> stats.splitSettledEvents >= 1),
+            new BadgeDefinition("SETTLEMENT_5", "Không để nợ dây dưa", "Hoàn tất 5 bill chia tiền", "badge-check", 120,
+                    stats -> stats.splitSettledEvents >= 5)
     );
 
     @Transactional
@@ -134,15 +152,25 @@ public class GamificationService {
 
         int txToday = (int) pointEventRepository.countByUserIdAndActionAndCreatedAtBetween(
                 user.getId(), ActionType.TRANSACTION_CREATED, dayStart, dayEnd);
+        int budgetToday = (int) pointEventRepository.countByUserIdAndActionAndCreatedAtBetween(
+                user.getId(), ActionType.BUDGET_CREATED, dayStart, dayEnd);
+        int importToday = (int) pointEventRepository.countByUserIdAndActionAndCreatedAtBetween(
+                user.getId(), ActionType.BANK_IMPORT_COMPLETED, dayStart, dayEnd);
+        int splitCreatedToday = (int) pointEventRepository.countByUserIdAndActionAndCreatedAtBetween(
+                user.getId(), ActionType.SPLIT_BILL_CREATED, dayStart, dayEnd);
+        int splitSettledToday = (int) pointEventRepository.countByUserIdAndActionAndCreatedAtBetween(
+                user.getId(), ActionType.SPLIT_BILL_SETTLED, dayStart, dayEnd);
         int txWeek = (int) pointEventRepository.countByUserIdAndActionAndCreatedAtBetween(
                 user.getId(), ActionType.TRANSACTION_CREATED, weekStart, weekEnd);
         int importWeek = (int) pointEventRepository.countByUserIdAndActionAndCreatedAtBetween(
                 user.getId(), ActionType.BANK_IMPORT_COMPLETED, weekStart, weekEnd);
         int splitWeek = (int) pointEventRepository.countByUserIdAndActionAndCreatedAtBetween(
                 user.getId(), ActionType.SPLIT_BILL_SETTLED, weekStart, weekEnd);
+        int dailyActivity = txToday + budgetToday + importToday + splitCreatedToday + splitSettledToday;
 
         return List.of(
                 mission("DAILY_TX", "Ghi 1 giao dịch hôm nay", "Giữ thói quen cập nhật chi tiêu", txToday, 1, 10),
+                mission("DAILY_ACTIVITY", "Làm 2 việc tài chính hôm nay", "Ghi giao dịch, tạo ngân sách, import sao kê hoặc xử lý bill nhóm", dailyActivity, 2, 20),
                 mission("WEEKLY_TX", "5 giao dịch trong tuần", "Ghi lại ít nhất 5 giao dịch", txWeek, 5, 40),
                 mission("WEEKLY_IMPORT", "Import sao kê tuần này", "Đưa sao kê ngân hàng vào app", importWeek, 1, 50),
                 mission("WEEKLY_SPLIT", "Hoàn tất 1 bill nhóm", "Chốt xong một khoản chia tiền", splitWeek, 1, 50)

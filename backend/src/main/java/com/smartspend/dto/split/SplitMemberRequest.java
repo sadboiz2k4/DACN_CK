@@ -8,8 +8,8 @@ public class SplitMemberRequest {
     @NotBlank
     private String displayName;
     private String email;
+    private String note;
     private String bankCode;
     private String bankAccountNumber;
     private String bankAccountName;
-    private boolean currentUser;
 }

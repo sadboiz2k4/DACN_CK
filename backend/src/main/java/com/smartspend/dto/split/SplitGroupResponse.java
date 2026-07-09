@@ -11,6 +11,9 @@ import java.util.List;
 @Builder
 public class SplitGroupResponse {
     private Long id;
+    private Long ownerId;
+    private String ownerName;
+    private boolean owner;
     private String name;
     private String note;
     private BigDecimal amountToPay;

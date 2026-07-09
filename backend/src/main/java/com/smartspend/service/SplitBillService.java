@@ -33,22 +33,23 @@ public class SplitBillService {
     private final WalletRepository walletRepository;
     private final CategoryRepository categoryRepository;
     private final TransactionRepository transactionRepository;
+    private final UserRepository userRepository;
     private final GamificationService gamificationService;
 
     private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
 
     @Transactional(readOnly = true)
     public List<SplitGroupResponse> getGroups(User user) {
-        return groupRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
+        return groupRepository.findVisibleToUser(user.getId())
                 .stream()
-                .map(group -> toGroupResponse(group, false))
+                .map(group -> toGroupResponse(group, false, user))
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public SplitGroupResponse getGroupDetail(User user, Long groupId) {
         SplitGroup group = getGroup(user, groupId);
-        return toGroupResponse(group, true);
+        return toGroupResponse(group, true, user);
     }
 
     @Transactional
@@ -60,22 +61,21 @@ public class SplitBillService {
                 .build();
         group = groupRepository.save(group);
 
+        group.getMembers().add(SplitGroupMember.builder()
+                .group(group)
+                .user(user)
+                .displayName(user.getFullName())
+                .email(user.getEmail())
+                .active(true)
+                .build());
+
         for (SplitMemberRequest memberRequest : request.getMembers()) {
-            group.getMembers().add(toMemberEntity(group, memberRequest));
+            if (!sameEmail(memberRequest.getEmail(), user.getEmail())) {
+                group.getMembers().add(toMemberEntity(group, memberRequest));
+            }
         }
 
-        if (group.getMembers().stream().noneMatch(SplitGroupMember::isCurrentUser)) {
-            group.getMembers().add(SplitGroupMember.builder()
-                    .group(group)
-                    .displayName(user.getFullName())
-                    .email(user.getEmail())
-                    .currentUser(true)
-                    .active(true)
-                    .build());
-        }
-
-        normalizeCurrentUser(group);
-        return toGroupResponse(groupRepository.save(group), true);
+        return toGroupResponse(groupRepository.save(group), true, user);
     }
 
     @Transactional
@@ -83,7 +83,7 @@ public class SplitBillService {
         SplitGroup group = getGroup(user, groupId);
         group.setName(request.getName().trim());
         group.setNote(blankToNull(request.getNote()));
-        return toGroupResponse(groupRepository.save(group), true);
+        return toGroupResponse(groupRepository.save(group), true, user);
     }
 
     @Transactional
@@ -91,8 +91,7 @@ public class SplitBillService {
         SplitGroup group = getGroup(user, groupId);
         SplitGroupMember member = toMemberEntity(group, request);
         group.getMembers().add(member);
-        normalizeCurrentUser(group, member.isCurrentUser() ? member : null);
-        return toGroupResponse(groupRepository.save(group), true);
+        return toGroupResponse(groupRepository.save(group), true, user);
     }
 
     @Transactional
@@ -103,14 +102,14 @@ public class SplitBillService {
 
         member.setDisplayName(request.getDisplayName().trim());
         member.setEmail(blankToNull(request.getEmail()));
+        member.setNote(blankToNull(request.getNote()));
+        member.setUser(resolveLinkedUser(request));
         member.setBankCode(normalizeBankCode(request.getBankCode()));
         member.setBankAccountNumber(blankToNull(request.getBankAccountNumber()));
         member.setBankAccountName(blankToNull(request.getBankAccountName()));
-        member.setCurrentUser(request.isCurrentUser());
-        normalizeCurrentUser(group, member.isCurrentUser() ? member : null);
         memberRepository.save(member);
 
-        return toGroupResponse(group, true);
+        return toGroupResponse(group, true, user);
     }
 
     @Transactional
@@ -178,7 +177,7 @@ public class SplitBillService {
         }
 
         BigDecimal currentUserPaid = participantEntities.stream()
-                .filter(p -> p.getMember().isCurrentUser())
+                .filter(p -> isMemberUser(p.getMember(), user))
                 .map(SplitBillParticipant::getPaidAmount)
                 .reduce(ZERO, BigDecimal::add);
         if (currentUserPaid.compareTo(ZERO) > 0) {
@@ -204,24 +203,27 @@ public class SplitBillService {
                 "Tạo bill nhóm",
                 "Bạn vừa chia một khoản chi với nhóm",
                 bill.getId());
-        return toBillResponse(bill);
+        return toBillResponse(bill, user);
     }
 
     @Transactional(readOnly = true)
     public SplitBillResponse getBillDetail(User user, Long billId) {
-        SplitBill bill = billRepository.findByIdAndUserId(billId, user.getId())
+        SplitBill bill = billRepository.findVisibleByIdAndUserId(billId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Bill not found"));
-        return toBillResponse(bill);
+        return toBillResponse(bill, user);
     }
 
     @Transactional
     public SplitSettlementResponse markPaid(User user, Long settlementId, SplitSettlementActionRequest request) {
         SplitSettlement settlement = getSettlement(user, settlementId);
+        if (!isMemberUser(settlement.getFromMember(), user)) {
+            throw new IllegalArgumentException("Only the payer can mark this settlement as paid");
+        }
         if (settlement.getStatus() == SettlementStatus.CONFIRMED) {
             throw new IllegalArgumentException("Settlement is already confirmed");
         }
 
-        if (settlement.getFromMember().isCurrentUser() && settlement.getPaidTransaction() == null) {
+        if (settlement.getPaidTransaction() == null) {
             if (request.getWalletId() == null) {
                 throw new IllegalArgumentException("Select a wallet to record this payment");
             }
@@ -239,17 +241,20 @@ public class SplitBillService {
         settlement.setStatus(SettlementStatus.MARKED_AS_PAID);
         settlement.setMarkedPaidAt(LocalDateTime.now());
         settlement.setPaymentNote(blankToNull(request.getNote()));
-        return toSettlementResponse(settlementRepository.save(settlement));
+        return toSettlementResponse(settlementRepository.save(settlement), user);
     }
 
     @Transactional
     public SplitSettlementResponse confirmReceived(User user, Long settlementId, SplitSettlementActionRequest request) {
         SplitSettlement settlement = getSettlement(user, settlementId);
+        if (!isMemberUser(settlement.getToMember(), user)) {
+            throw new IllegalArgumentException("Only the receiver can confirm this settlement");
+        }
         if (settlement.getStatus() == SettlementStatus.CONFIRMED) {
-            return toSettlementResponse(settlement);
+            return toSettlementResponse(settlement, user);
         }
 
-        if (settlement.getToMember().isCurrentUser() && settlement.getReceivedTransaction() == null) {
+        if (settlement.getReceivedTransaction() == null) {
             if (request.getWalletId() == null) {
                 throw new IllegalArgumentException("Select a wallet to record the received reimbursement");
             }
@@ -278,7 +283,7 @@ public class SplitBillService {
                     "Một bill chia tiền đã được tất toán",
                     settlement.getBill().getId());
         }
-        return toSettlementResponse(settlement);
+        return toSettlementResponse(settlement, user);
     }
 
     private List<PreparedParticipant> prepareParticipants(
@@ -462,7 +467,7 @@ public class SplitBillService {
     }
 
     private SplitGroup getGroup(User user, Long groupId) {
-        return groupRepository.findByIdAndUserId(groupId, user.getId())
+        return groupRepository.findVisibleByIdAndUserId(groupId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Split group not found"));
     }
 
@@ -472,54 +477,43 @@ public class SplitBillService {
     }
 
     private SplitGroupMember toMemberEntity(SplitGroup group, SplitMemberRequest request) {
+        User linkedUser = resolveLinkedUser(request);
         return SplitGroupMember.builder()
                 .group(group)
+                .user(linkedUser)
                 .displayName(request.getDisplayName().trim())
                 .email(blankToNull(request.getEmail()))
+                .note(blankToNull(request.getNote()))
                 .bankCode(normalizeBankCode(request.getBankCode()))
                 .bankAccountNumber(blankToNull(request.getBankAccountNumber()))
                 .bankAccountName(blankToNull(request.getBankAccountName()))
-                .currentUser(request.isCurrentUser())
                 .active(true)
                 .build();
     }
 
-    private void normalizeCurrentUser(SplitGroup group) {
-        normalizeCurrentUser(group, null);
+    private User resolveLinkedUser(SplitMemberRequest request) {
+        if (isBlank(request.getEmail())) {
+            return null;
+        }
+        return userRepository.findByEmail(request.getEmail().trim()).orElse(null);
     }
 
-    private void normalizeCurrentUser(SplitGroup group, SplitGroupMember preferred) {
-        SplitGroupMember selected = preferred != null && preferred.isActive() && preferred.isCurrentUser()
-                ? preferred
-                : null;
-
-        if (selected == null) {
-            selected = group.getMembers().stream()
-                    .filter(member -> member.isActive() && member.isCurrentUser())
-                    .findFirst()
-                    .orElse(null);
-        }
-
-        if (selected == null) {
-            selected = group.getMembers().stream()
-                    .filter(SplitGroupMember::isActive)
-                    .findFirst()
-                    .orElse(null);
-        }
-
-        for (SplitGroupMember member : group.getMembers()) {
-            member.setCurrentUser(member.isActive() && member == selected);
-        }
+    private boolean isMemberUser(SplitGroupMember member, User user) {
+        return member.getUser() != null && member.getUser().getId().equals(user.getId());
     }
 
-    private SplitGroupResponse toGroupResponse(SplitGroup group, boolean includeBills) {
+    private boolean sameEmail(String a, String b) {
+        return !isBlank(a) && !isBlank(b) && a.trim().equalsIgnoreCase(b.trim());
+    }
+
+    private SplitGroupResponse toGroupResponse(SplitGroup group, boolean includeBills, User user) {
         List<SplitMemberResponse> members = group.getMembers().stream()
                 .filter(SplitGroupMember::isActive)
-                .map(this::toMemberResponse)
+                .map(member -> toMemberResponse(member, user))
                 .toList();
 
         Optional<SplitGroupMember> currentMember = group.getMembers().stream()
-                .filter(SplitGroupMember::isCurrentUser)
+                .filter(member -> isMemberUser(member, user))
                 .findFirst();
 
         BigDecimal toPay = ZERO;
@@ -544,10 +538,13 @@ public class SplitBillService {
 
         return SplitGroupResponse.builder()
                 .id(group.getId())
+                .ownerId(group.getUser().getId())
+                .ownerName(group.getUser().getFullName())
+                .owner(group.getUser().getId().equals(user.getId()))
                 .name(group.getName())
                 .note(group.getNote())
                 .members(members)
-                .bills(includeBills ? group.getBills().stream().map(this::toBillResponse).toList() : null)
+                .bills(includeBills ? group.getBills().stream().map(bill -> toBillResponse(bill, user)).toList() : null)
                 .amountToPay(money(toPay))
                 .amountToReceive(money(toReceive))
                 .openBillCount(openBillCount)
@@ -556,20 +553,23 @@ public class SplitBillService {
                 .build();
     }
 
-    private SplitMemberResponse toMemberResponse(SplitGroupMember member) {
+    private SplitMemberResponse toMemberResponse(SplitGroupMember member, User user) {
         return SplitMemberResponse.builder()
                 .id(member.getId())
+                .userId(member.getUser() != null ? member.getUser().getId() : null)
                 .displayName(member.getDisplayName())
                 .email(member.getEmail())
+                .note(member.getNote())
                 .bankCode(member.getBankCode())
                 .bankAccountNumber(member.getBankAccountNumber())
                 .bankAccountName(member.getBankAccountName())
-                .currentUser(member.isCurrentUser())
+                .currentUser(isMemberUser(member, user))
+                .linkedUser(member.getUser() != null)
                 .active(member.isActive())
                 .build();
     }
 
-    private SplitBillResponse toBillResponse(SplitBill bill) {
+    private SplitBillResponse toBillResponse(SplitBill bill, User user) {
         return SplitBillResponse.builder()
                 .id(bill.getId())
                 .groupId(bill.getGroup().getId())
@@ -581,19 +581,19 @@ public class SplitBillService {
                 .splitMode(bill.getSplitMode())
                 .status(bill.getStatus())
                 .transactionId(bill.getTransaction() != null ? bill.getTransaction().getId() : null)
-                .participants(bill.getParticipants().stream().map(this::toParticipantResponse).toList())
-                .settlements(bill.getSettlements().stream().map(this::toSettlementResponse).toList())
+                .participants(bill.getParticipants().stream().map(participant -> toParticipantResponse(participant, user)).toList())
+                .settlements(bill.getSettlements().stream().map(settlement -> toSettlementResponse(settlement, user)).toList())
                 .createdAt(bill.getCreatedAt())
                 .updatedAt(bill.getUpdatedAt())
                 .build();
     }
 
-    private SplitBillParticipantResponse toParticipantResponse(SplitBillParticipant participant) {
+    private SplitBillParticipantResponse toParticipantResponse(SplitBillParticipant participant, User user) {
         return SplitBillParticipantResponse.builder()
                 .id(participant.getId())
                 .memberId(participant.getMember().getId())
                 .memberName(participant.getMember().getDisplayName())
-                .currentUser(participant.getMember().isCurrentUser())
+                .currentUser(isMemberUser(participant.getMember(), user))
                 .paidAmount(participant.getPaidAmount())
                 .shareAmount(participant.getShareAmount())
                 .sharePercent(participant.getSharePercent())
@@ -601,17 +601,17 @@ public class SplitBillService {
                 .build();
     }
 
-    private SplitSettlementResponse toSettlementResponse(SplitSettlement settlement) {
+    private SplitSettlementResponse toSettlementResponse(SplitSettlement settlement, User user) {
         String content = "SPLIT " + settlement.getBill().getId() + " " + settlement.getFromMember().getDisplayName();
         return SplitSettlementResponse.builder()
                 .id(settlement.getId())
                 .billId(settlement.getBill().getId())
                 .fromMemberId(settlement.getFromMember().getId())
                 .fromMemberName(settlement.getFromMember().getDisplayName())
-                .fromCurrentUser(settlement.getFromMember().isCurrentUser())
+                .fromCurrentUser(isMemberUser(settlement.getFromMember(), user))
                 .toMemberId(settlement.getToMember().getId())
                 .toMemberName(settlement.getToMember().getDisplayName())
-                .toCurrentUser(settlement.getToMember().isCurrentUser())
+                .toCurrentUser(isMemberUser(settlement.getToMember(), user))
                 .toBankCode(settlement.getToMember().getBankCode())
                 .toBankAccountNumber(settlement.getToMember().getBankAccountNumber())
                 .toBankAccountName(settlement.getToMember().getBankAccountName())
