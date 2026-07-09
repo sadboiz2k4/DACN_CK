@@ -18,11 +18,18 @@ public class SplitGroupMember {
     @JoinColumn(name = "group_id", nullable = false)
     private SplitGroup group;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Column(name = "display_name", nullable = false, length = 255)
     private String displayName;
 
     @Column(length = 255)
     private String email;
+
+    @Column(length = 500)
+    private String note;
 
     @Column(name = "bank_code", length = 30)
     private String bankCode;
