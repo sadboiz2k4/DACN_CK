@@ -192,14 +192,27 @@ export default function Forecast() {
           </h2>
           <div className="space-y-2">
             {anomalies.map((a, i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-amber-50 rounded-xl">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">#{a.transaction_id}</p>
-                  <p className="text-xs text-gray-400">{a.date}</p>
+              <div key={i} className="flex items-start justify-between p-3 bg-amber-50 rounded-xl gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-sm font-medium text-gray-900">#{a.transaction_id}</p>
+                    {a.category_name && (
+                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                        {a.category_name}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500">{a.date}</p>
+                  {a.reason && (
+                    <p className="text-xs text-amber-700 mt-1 font-medium">⚠ {a.reason}</p>
+                  )}
                 </div>
-                <div className="text-right">
+                <div className="text-right flex-shrink-0">
                   <p className="text-sm font-bold text-red-600">{formatCurrency(a.amount)}</p>
-                  <p className="text-xs text-gray-400">Score: {a.anomaly_score?.toFixed(2)}</p>
+                  {a.avg_amount && (
+                    <p className="text-xs text-gray-400">TB: {formatCurrency(a.avg_amount)}</p>
+                  )}
+                  <p className="text-xs text-gray-300">score: {a.anomaly_score?.toFixed(2)}</p>
                 </div>
               </div>
             ))}
