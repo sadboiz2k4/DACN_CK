@@ -21,7 +21,16 @@ public class CategoryController {
 
     @GetMapping
     public ResponseEntity<List<Category>> getCategories(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(categoryRepository.findAllByUserId(user.getId()));
+        List<Category> categories = categoryRepository.findAllByUserId(user.getId());
+        List<Category> deduplicated = categories.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        c -> c.getType().name() + "_" + c.getName().toLowerCase().trim(),
+                        c -> c,
+                        (existing, replacement) -> replacement.isDefault() ? existing : replacement,
+                        java.util.LinkedHashMap::new
+                ))
+                .values().stream().toList();
+        return ResponseEntity.ok(deduplicated);
     }
 
     @PostMapping

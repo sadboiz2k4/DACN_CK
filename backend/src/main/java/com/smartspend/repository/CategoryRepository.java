@@ -18,6 +18,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     @Query("SELECT c FROM Category c WHERE (c.isDefault = true OR c.user.id = :userId) AND c.type = :type")
     List<Category> findByUserIdAndType(Long userId, CategoryType type);
 
-    @Query("SELECT c FROM Category c WHERE (c.isDefault = true OR c.user.id = :userId) AND LOWER(c.name) = LOWER(:name)")
+    @Query("SELECT c FROM Category c WHERE (c.isDefault = true OR c.user.id = :userId) AND LOWER(c.name) = LOWER(:name) ORDER BY c.isDefault ASC LIMIT 1")
     Optional<Category> findByNameAndUserId(@Param("name") String name, @Param("userId") Long userId);
 }
